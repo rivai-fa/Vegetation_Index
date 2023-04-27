@@ -1,0 +1,321 @@
+//------VEGETATION INDEX-------//
+
+//1968
+//Simple Ratio (SR)
+//Birth GS, McVey GR. 1968. Measuring the Color of Growing Turf with a Reflectance Spectrophotometer. Agronomy Journal. 60: 640-643.
+//(+) Persamaan sederhana dan efektif di berbagai kondisi
+//(-) Dapat jenuh di vegetasi lebat ketika LAI sangat tinggi
+var sr = sentinel_2.expression('(NIR/Red)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1974
+//Normalized Difference Vegetation Index (NDVI)
+//Rouse jr JW, Haas RH, Schell JA,  Deering DW. 1974. Monitoring vegetation systems in the Great Plains with ERTS. NASA Special Publication. 351(1): 309-317.
+//(+) Dapat mengukur kesehatan vegetasi
+//(-) Jenuh dalam kondisi vegetasi yang lebat ketika LAI menjadi tinggi
+var ndvi = sentinel_2.expression('(NIR - Red) / (NIR + Red)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1976
+//Green Vegetation Index (GVI)
+//Kauth RJ, Thomas GS. 1976. The tasselled cap -- a graphic description of the spectral-temporal development of agricultural crops as seen by Landsat. LARS Symposia. 159: 41-51.
+//(+) meminimalkan efek tanah latar belakang dan menegaskan nilai vegetasi hijau
+//(-) awalnya didesain untuk Landsat TM
+var gvi = sentinel_2.expression('(-0.2848 * Blue - 0.2435 * Green - 0.5436 * Red + 0.7243 * NIR + 0.084 * SWIR1 - 0.18 * SWIR2)',{
+  'Blue'    : sentinel_2.select('B2'),
+  'Green'   : sentinel_2.select('B3'),
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8'),
+  'SWIR1'   : sentinel_2.select('B11'),
+  'SWIR2'   : sentinel_2.select('B12')
+});
+  
+//1979
+//Difference Vegetation Index (DVI)
+//Tucker C. 1979.  Red and Photographic Infrared Linear Combinations for Monitoring Vegetation. Remote Sensing of Environment. 8: 127–150.
+//(+) Mampu membedakan tanah dengan vegetasi
+//(-) Tidak dapat membedakan reflektansi dan pancaran dari efek atmosfer atau bayangan
+var dvi = sentinel_2.expression('(NIR - Red)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1988
+//Soil Adjusted Vegetation Index (SAVI)
+//Huete AR. A soil-adjusted vegetation index (SAVI). Remote Sensing of Environment. 25(3): 295-309.
+//(+) Baik digunakan di daerah dengan vegetasi relatif jarang/tanah masih terlihat melalui kanopi
+//L = 0.5 merupakan fungsi kepadatan vegetasi
+var savi = sentinel_2.expression('(1.5 * (NIR - Red) / (NIR + Red + 0.5))', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1990
+//Infrared Percentage Vegetation Index (IPVI)
+//Crippen RE. Calculating the vegetation index faster. Remote sensing of Environment. 34(1):71-73.
+//Secara fungsional memiliki kesamaan dengan NDVI
+//(+) Secara komputasi lebih cepat
+var tpvi = sentinel_2.expression('NIR/(NIR + Red)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+
+//1992
+//Global Environmental Monitoring Index (GEMI)
+//Pinty B, Verstraete MM. 1992. GEMI: a non-linear index to monitor global vegetation from satellites. Vegetatio. 101: 15-20.
+//(+) Indeks vegetasi non-linear, mengoreksi efek atmosfer
+//(+) Kurang sensitif terhadap efek atmosfer
+//(-) Tidak direkomendasikan di daerah vegetasi yang jarang
+var gemi = sentinel_2.expression('((2*((NIR**2)-(Red**2) + 1.5*NIR + 0.5* Red))/(NIR + Red + 0.5)))*(1 - 0.25*(((2*((NIR**2)-(Red**2) + 1.5*NIR + 0.5* Red))/(NIR + Red + 0.5)))))-((Red - 0.125)/(1 - Red))', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1994
+//Modified Soil Adjusted Vegetation Index 2 (MSAVI2)
+//Qi J, Chehbouni A, Huete AR, Kerr YH, Sorooshian S. 1994. A modified soil adjusted vegetation index. Remote Sensing of Environment. 48(2): 119-126.
+//(+) Mengurangi noise dari tanah dan meningkatkan rentang dinamis sinyal vegetasi
+var msavi2 = sentinel_2.expression('(2*NIR + 1 - ((((2*NIR + 1)**2)-8*(NIR - Red))**0.5))/2', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1994
+//Non-Linear Index (NLI)
+//Goel NS, Qin W. 1994. Influences of canopy architecture on relationships between various vegetation indices and LAI and FPAR: A computer simulation. Remote Sensing Reviews. 10(4): 309-347.
+//Berasumsi hubungan antar banyak indeks vegetasi dan parameter biofisik permukaan adalah non-linier
+var nli = sentinel_2.expression('((NIR**2) - Red)/((NIR**2) + Red)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1994
+//Normalized Pigment Chlorophyll Index (NPCI)
+//Peñuelas J, Gamon JA, Fredeen AL, Merino J, Field CB. 1994. Reflectance indices associated with physiological changes in nitrogen-and water-limited sunflower leaves. Remote Sensing of Environment. 48(2): 135-146.
+//Borfecchia F, Crinò P, Correnti A, Farneti A, De Cecco L, Masci D, Blasi L, Iantosca D, Pignatelli V, Micheli C. 2020. Assessing the Impact of Water Salinization Stress on Biomass Yield of Cardoon Bio-Energetic Crops through Remote Sensing Techniques. Resources. 9(10): 1-27.
+//Menilai rasio pergerakan klorofil di daun
+//Didesain untuk Spektroradiometer
+//Borfecchia merumuskannya dengan Landsat-8 dan Sentinel-2 dengan Coastal
+var npci = sentinel_2.expression('(Red - Coastal)/(Red + Coastal)',{
+  'Coastal' : sentinel_2.select('B1'),
+  'Red'     : sentinel_2.select('B4')
+});
+
+//1995
+//Atmospherically Resistant Vegetation Index (ARVI)
+//Bannari A, Morin D, Bonn F, Huete AR. 1995. A review of vegetation indices. Remote Sensing Reviews. 13(2): 95-120.
+var arvi = sentinel_2.expression('(NIR - (Red - (1 * (Red - Blue)))) / (NIR + (Red - (1 * (Red - Blue))))', {
+  'Blue'    : sentinel_2.select('B2'),
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1995
+//Renormalized Difference Vegetation Index (RDVI)
+//Roujean JL, Breon FM. 1995. Estimating PAR absorbed by vegetation from bidirectional reflectance measurements. Remote Sensing of Environment. 51(3): 375-384.
+//Insensitive to the effects of soil and sun viewing geometry.
+var rdvi = sentinel_2.expression('((NIR - Red) / (NIR + Red)**0.5)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1996
+//Modified Simple Ratio (MSR)
+//Chen JM. 1996.Evaluation of Vegetation Indices and Modified Simple Ratio for Boreal Applications. Canadian Journal of Remote Sensing 22: 229-242.
+//(+) Dikembangkan sebagai perbaikan RDVI
+//(-) Sensitif terhadap parameter biofisik vegetasi
+var msr = sentinel_2.expression('((NIR/Red)-1/sqrt(NIR/Red)+1)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1996
+//Green Atmospherically Resistant Index (GARI)
+//Gitelson AA, Kaufman YJ, Merzlyak MN. 1996. Use of a green channel in remote sensing of global vegetation from EOS-MODIS. Remote sensing of Environment. 58(3): 289-298.
+//(+) Lebih sensitif terhadap konsentrasi klorofil
+var gari = sentinel_2.expression('(NIR - (Green - 1.7*(Blue - Red))/NIR + (Green - 1.7*(Blue - Red))', {
+  'Blue'    : sentinel_2.select('B2'),
+  'Green'   : sentinel_2.select('B3'),
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1996
+//Optimized Soil Adjusted Vegetation Index (OSAVI)
+//Rondeaux G, Steven M, Baret F. 1996. Optimization of soil-adjusted vegetation indices. Remote Sensing of Environment. 55(2): 95-107.
+//(+) Bagus di daerah dengan vegetasi yang relatif jarang di mana tanah terlihat melalui kanopi
+var osavi = sentinel_2.expression('((NIR - Red) / (NIR + Red + 0.16))', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1997
+//Modified Normalized Difference Vegetation Index (MNDVI)
+//Jurgens C. 1997. The modified normalized difference vegetation index (mNDVI) a new index to determine frost damages in agriculture based on Landsat TM data. International Journal of Remote Sensing. 18(17): 3583-3594.
+//(+) Dapat mendeteksi frost damage di lahan pertanian
+var mndvi = sentinel_2.expression('(RE2 - RE1) / (RE2 + RE1)', {
+  'RE1'     : sentinel_2.select('B5'),
+  'RE2'     : sentinel_2.select('B6')
+});
+
+//1998
+//Green normalized difference vegetation index (GNDVI)
+//Gitelson AA, Merzlyak MN. 1998. Remote sensing of chlorophyll concentration in higher plant leaves. Advances in Space Research. 22(5): 689-692.
+//(+) Lebih sensitif terhadap konsentrasi klorofil daripada NDVI
+var gndvi = sentinel_2.expression('(NIR - Green) / (NIR + Green)', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//1999
+//Leaf Chlorophyll Index (LCI)
+//Datt B. 1999. Remote sensing of water content in Eucalyptus leaves. Australian Journal of Botany. 47(6):909-923.
+//Memperkirakan kandungan klorofil pada tumbuhan tingkat tinggi
+//(+) Sensitif terhadap variasi reflektansi yang disebabkan oleh penyerapan klorofil
+var lci = sentinel_2.expression('(NIR - RE1) / (NIR + Red)',{
+  'Red'     : sentinel_2.select('B4'),
+  'RE1'     : sentinel_2.select('B5'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2000
+//Specific Leaf Area Vegetation Index (SLAVI)
+//Lymburner L, Beggs PJ, Jacobson CR. 2000. Estimation of canopy-average surface-specific leaf area using Landsat TM data. Photogrammetric Engineering and Remote Sensing. 66(2): 183-191.
+var slavi = sentinel_2.expression('(NIR) / (Red + SWIR2)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8'),
+  'SWIR2'   : sentinel_2.select('B12')
+});
+
+//2001
+//Green Leaf Index (GLI)
+//Louhaichi M, Borman MM, Johnson DE. 2001. Spatially located platform and aerial photography for documentation of grazing impacts on wheat. Geocarto International. 16(1):65-70.
+//Awalnya dirancang untuk kamera RGB digitas untuk kerapatan gandum
+var gli = sentinel_2.expression('((Green - Red)+(Green - Blue))/((2*Green)+ Red + Blue)', {
+  'Blue'    : sentinel_2.select('B2'),
+  'Green'   : sentinel_2.select('B3'),
+  'Red'     : sentinel_2.select('B4')
+});
+
+//2002
+//Enhanced Vegetation Index (EVI)
+//Huete A, Didan K, Miura T, Rodriguez EP, Gao X, Ferreira LG. 2002. Overview of the radiometric and biophysical performance of the MODIS vegetation indices. Remote Sensing of Environment. 83(2): 195-213.
+//(+) Perbaikan atas NDVI yang jenuh di daerah LAI tinggi
+//(+) Blue mengoreksi sinyal latar belakang tanah dan Mengurangi pengaruh atmosfer
+//(-) Nilai anomali pada obyek yang terlalu cerah (awan dan bangunan putih) atau terlalu gelap (badan air dalam)
+var evi = sentinel_2.expression('((NIR - Red) / ((NIR + 6) * (Red - 7.5) * (Blue + 1))) * 2.5', {
+  'Blue'    : sentinel_2.select('B2'),
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2002
+//Leaf Area Index (LAI)
+//Boegh E, Soegaard H, Broge N, Hasager CB, Jensen NO, Schelde K, Thomsen A. 2002. Airborne multispectral data for quantifying leaf area index, nitrogen concentration, and photosynthetic efficiency in agriculture. Remote sensing of Environment. 81(3): 179-193.
+//(-) Anomali pada obyek terlalu terang dan atau gelap
+var lai = sentinel_2.expression('3.618*(EVI)-0.118',{
+  'EVI'     : sentinel_2.select('evi')
+});
+
+//2002
+//Transformed Difference Vegetation Index (TDVI)
+//Bannari A, Asalhi H, Teillet PM. 2002. Transformed difference vegetation index (TDVI) for vegetation cover mapping. IEEE International Geoscience and Remote Sensing Symposium. 5: 3053-3055.
+//(+) Cocok memonitoring vegetasi di urban, tidak tersaturasi seperti NDVI dan SAVI
+var tdvi = sentinel_2.expression('(1.5 * (NIR - Red) / ((NIR**2) + Red + 0.5)**0.5)', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+}); 
+
+//2002
+//Visible Atmospherically Resistant Index (VARI)
+//Gitelson AA, Stark R, Grits U, Rundquist D, Kaufman Y, Derry D. 2002. Vegetation and soil lines in visible spectral space: A concept and technique for remote estimation of vegetation fraction. International Journal of Remote Sensing. 23(13): 2537-2562.
+//memperkirakan fraksi vegetasi dalam adegan dengan sensitivitas rendah terhadap efek atmosfer.
+var vari = sentinel_2.expression('(Green - Red)/(Green + Red - Blue)',{
+  'Blue'    : sentinel_2.select('B2'),
+  'Green'   : sentinel_2.select('B3'),
+  'Red'     : sentinel_2.select('B4')
+});
+
+//2003
+//Green Chlorophyll Index (GCI)
+//Gitelson AA, Gritz Y, Merzlyak MN. 2003. Relationships between leaf chlorophyll content and spectral reflectance and algorithms for non-destructive chlorophyll assessment in higher plant leaves. Journal of Plant Physiology. 160(3):271-282.
+//(+) Indeks ini digunakan untuk mengestimasi klorofil daun di berbagai spesies tanaman
+var gci = sentinel_2.expression('(NIR/Green)-1', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2004
+//Wide Dynamic Range Vegetation Index (WDRVI)
+//Gitelson AA. 2004. Wide dynamic range vegetation index for remote quantification of biophysical characteristics of vegetation. Journal of Plant Physiology. 161(2): 165-173.
+//menggunakan koefisien pembobotan (a) untuk mengurangi perbedaan antara kontribusi sinyal inframerah-dekat dan merah
+//(+) Efektif dalam pemandangan yang memiliki kepadatan vegetasi sedang hingga tinggi
+//(+) WDRVI lebih sensitif terhadap fraksi vegetasi yang lebih luas dan perubahan LAI.
+var wdrvi = sentinel_2.expression('((0.2 * NIR - Red) / (0.2 * NIR + Red ))', {
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2005
+//Green Difference Vegetation Index (GDVI)
+//Disertasi=Sripada RP. 2005. Determining in-season nitrogen requirements for corn using aerial color-infrared photography. North Carolina State University.
+//Indeks dirancang dengan fotografi inframerah untuk prediksi kebutuhan nitrogen jagung
+var gdvi = sentinel_2.expression('NIR - Green', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2005
+//Green Optimized Soil Adjusted Vegetation Index (GOSAVI)
+//Disertasi=Sripada RP. 2005. Determining in-season nitrogen requirements for corn using aerial color-infrared photography. North Carolina State University.
+//Indeks dirancang dengan fotografi inframerah untuk prediksi kebutuhan nitrogen jagung
+var gosavi = sentinel_2.expression('(NIR - Green)/(NIR + Green + 0.16)', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2005
+//Green Soil Adjusted Vegetation Index (GSAVI)
+//Disertasi=Sripada RP. 2005. Determining in-season nitrogen requirements for corn using aerial color-infrared photography. North Carolina State University.
+//Indeks dirancang dengan fotografi inframerah untuk prediksi kebutuhan nitrogen jagung
+var gsavi = sentinel_2.expression('1.5 * (NIR - Green)/(NIR + Green + 0.5)', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2006
+//Green Ratio Vegetation Index (GRVI)
+//Sripada RP, Heiniger RW, White JG, Meijer AD. 2006. Aerial color infrared photography for determining early in‐season nitrogen requirements in corn. Agronomy Journal. 98(4):968-977.
+//(+) Indeks sensitif terhadap tingkat fotosintesis kanopi hutan
+//(+) Reflektansi hijau dan NIR sensitif terhadap perubahan pigmen daun 
+var grvi = sentinel_2.expression('NIR/Green', {
+  'Green'   : sentinel_2.select('B3'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//2008
+//Modified Non-Linear Index (MNLI)
+//Yang Z, Willis P, Mueller R. 2008. Impact of band-ratio enhanced AWIFS image to crop classification accuracy. Proceedings of the Pecora 17 Remote Sensing Symposium. 17(1): 1-11.
+//Modifikasi dari NLI dengan menggabungkan SAVI
+//(+) Memperhitungkan soil background
+//Nilai canopy background adjusment factor (L) = 0.5
+var mnli = sentinel_2.expression('(((NIR**2) - Red)*(1 + 0.5))/((NIR**2) + Red + 0.5)',{
+  'Red'     : sentinel_2.select('B4'),
+  'NIR'     : sentinel_2.select('B8')
+});
+
+//Indeks vegetasi C/N? 
+
+
+
+
+
+
+
+
+//------VEGETATION INDEX-------//
